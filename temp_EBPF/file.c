@@ -1,0 +1,76 @@
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
+
+#include <bpf/libbpf.h>
+
+#include "file.skel.h"
+
+static volatile int running = 1;
+
+struct event {
+    __u32 pid;
+    __u32 uid;
+    char filename[256];
+    char comm[16];
+    int flags;
+};
+
+static void sig_handler(int signo)
+{
+    running = 0;
+}
+
+static int handle_event(void *ctx, void *data, size_t len)
+{
+    struct event *e = data;
+    // if (e->pid != 0 && e->pid != 790194){
+        printf(
+        "OPEN\n"
+        "PID: %u\n"
+        "COMM: %s\n"
+        "FILENAME: %s\n"
+        "FLAGS: %d\n\n",
+        e->pid,
+        e->filename,
+        e->comm,
+        e->flags
+    );
+    // }
+
+    return 0;
+}
+
+int main(void)
+{
+    struct file_bpf *skel;
+    struct ring_buffer *rb = NULL;
+
+    signal(SIGINT, sig_handler);
+
+    skel = file_bpf__open_and_load();
+    if (!skel) {
+        printf("Load failed\n");
+        return 1;
+    }
+
+    if (file_bpf__attach(skel)) {
+        printf("Attach failed\n");
+        return 1;
+    }
+
+    rb = ring_buffer__new(
+            bpf_map__fd(skel->maps.events),
+            handle_event,
+            NULL,
+            NULL);
+
+    while (running)
+        ring_buffer__poll(rb, 100);
+
+    ring_buffer__free(rb);
+
+    file_bpf__destroy(skel);
+
+    return 0;
+}

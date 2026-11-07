@@ -1,0 +1,22 @@
+
+bpf
+
+raz dla danego kenrela:
+bpftool btf dump file /sys/kernel/btf/vmlinux format c > vmlinux.h
+i robimy #inlucde vmlinux.h w plik.ebpf.C
+
+kompilacja:
+clang \
+-target bpf \
+-O2 \
+-g \
+-c hello.bpf.c \
+-o hello.bpf.o
+
+szkielet:
+bpftool gen skeleton hello.bpf.o > hello.skel.h
+
+program użytkownika z buffer ringiem
+
+kompilacja:
+gcc hello.c -lbpf -lelf -lz -o hello
