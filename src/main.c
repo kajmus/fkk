@@ -2,34 +2,42 @@
 #include <signal.h>
 #include <stdbool.h>
 #include "cli/cli.h"
-// #include "modes/watch.h"
+#include "common/event.h"
+#include "modes/modes.h"
+#include "modes/watch.c"
 // #include "modes/guard.h"
 
-// Globalna flaga dla pętli eBPF - gdy użytkownik wciśnie Ctrl+C, zmieni się na true
 volatile sig_atomic_t stop_program = 0;
 
 static void sig_handler(int signo) {
+    printf("\n[INFO] signal recived %d\n", signo);
     stop_program = 1;
+}
+
+static int handle_event(void *ctx, void *data, size_t data_s){
+    struct event *e = data;
+    printf(
+
+    );
+    return 0;
 }
 
 int main(int argc, char **argv) {
     struct app_config cfg;
 
-    // 1. Przetwórz argumenty na strukturę
     if (cli_parse(argc, argv, &cfg) != 0) {
         return 1;
     }
 
-    // 2. Złap Ctrl+C (SIGINT) i SIGTERM - kluczowe w eBPF, by posprzątać po sobie!
     signal(SIGINT, sig_handler);
     signal(SIGTERM, sig_handler);
 
-    // 3. Odpal odpowiedni moduł przekazujać wskaźnik do konfiguracji
     switch (cfg.mode) {
         case MODE_WATCH:
             printf("[START] Tryb WATCH na ścieżce: %s (odświeżanie: %d ms)\n", 
                    cfg.target_path, cfg.refresh_ms);
             // return run_watch_mode(&cfg, &stop_program);
+            
             break;
 
         case MODE_GUARD:

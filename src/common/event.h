@@ -15,3 +15,17 @@
 // • Rename needs two paths. Decide when you reach that step; the simplest option is a second path field that only rename uses.
 // • Look at how libbpf-bootstrap shares its event header between the .bpf.c and the user-space file. Copy that pattern.
 // • Keep a small schema version in the JSON output. It costs nothing now and saves your replay tests later.
+
+#include "limits.h"
+
+#ifndef __EVENT_H
+#define __EVENT_H
+
+struct event{
+    // char type;
+    int pid;
+	char comm[TASK_COMM_LEN];
+	char filename[MAX_FILENAME_LEN];
+};
+
+#endif

@@ -50,3 +50,8 @@
     │   ├── fixtures/          recorded .jsonl event files for replay
     │   └── e2e/               shell scripts: run watch, touch a file, check output
     └── build/                 all generated files, never committed
+
+# links and resources
+
+### versioned linux source code
+    https://elixir.bootlin.com
