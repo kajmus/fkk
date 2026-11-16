@@ -1,0 +1,5 @@
+# Hashes of file build rules.
+3c243802e1e697bfc33236e434eb8e4f CMakeFiles/generate_bpf_skeletons
+ba26f1984358cbb2e1219fbfc96357b9 bpf_generated/vmlinux.h
+8fbf9e9f4abb5561695aa5f2861aa56a bpf_generated/watch.bpf.o
+156f224725ba9c0732feea05f5a925af bpf_generated/watch.skel.h

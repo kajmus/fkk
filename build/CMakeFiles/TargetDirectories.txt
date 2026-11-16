@@ -1,0 +1,4 @@
+/home/kamil/Documents/fkk/build/CMakeFiles/generate_bpf_skeletons.dir
+/home/kamil/Documents/fkk/build/CMakeFiles/fkk.dir
+/home/kamil/Documents/fkk/build/CMakeFiles/edit_cache.dir
+/home/kamil/Documents/fkk/build/CMakeFiles/rebuild_cache.dir

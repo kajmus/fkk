@@ -53,5 +53,17 @@
 
 # links and resources
 
+## inspiration
+
+### watch mode
+two submodes looking at the current open files like lsof and second by bpf monitoring opening and closing files
+
+    lsof
+
+## commands
+
+    sudo bpftrace -lv 'fentry:*security_file*'
+
+
 ### versioned linux source code
     https://elixir.bootlin.com

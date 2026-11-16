@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(fileguard C)
+project(fkk C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -80,23 +80,25 @@ add_custom_target(generate_bpf_skeletons DEPENDS ${BPF_SKELETON_HEADERS})
 file(GLOB APP_SOURCES 
     src/main.c
     src/cli/*.c
+    src/common/*.h
+    src/modes/watch.c
 )
 
-add_executable(fileguard ${APP_SOURCES})
+add_executable(fkk ${APP_SOURCES})
 
 # Ustawienie ścieżek wyszukiwania nagłówków (#include)
-target_include_directories(fileguard PRIVATE
+target_include_directories(fkk PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${BPF_GEN_DIR}
 )
 
 # Linkowanie bibliotek
-target_link_libraries(fileguard PRIVATE
+target_link_libraries(fkk PRIVATE
     ${LIBBPF_LIBRARIES}
     ${LIBELF_LIB}
     ZLIB::ZLIB
 )
 
 # Wymuszenie kolejności: najpierw eBPF (.skel.h), potem kod C
-add_dependencies(fileguard generate_bpf_skeletons)
+add_dependencies(fkk generate_bpf_skeletons)
