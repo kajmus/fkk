@@ -16,7 +16,7 @@
 #include "../common/event.h"
 
 #define DROP_CHECK_INTERVAL_NS (1000000000ULL) // 1 second
-#define TEST_DROPS 1
+// #define TEST_DROPS 1
 static volatile sig_atomic_t stop_program = 0;
 
 
@@ -73,6 +73,7 @@ static int drop_tracker_init(struct watch_ctx *ctx, const struct bpf_map *drops_
 
     ctx->drops_map = drops_map;
     ctx->num_cpus = n;
+    ctx->percpu_buf_sz = (size_t)n * sizeof(uint64_t);
     ctx->last_check_ns = now_monotonic_ns();
     return 0;
 }
@@ -144,21 +145,9 @@ static int handle_event(void *raw_ctx, void *data, size_t data_s){
 
 	if(stop_program) return -EINTR;
 
-	// printf("[EVENT] type=%d pid=%d ppid=%d comm=%s path=%s flags=0x%x\n",
-	// 	e->type, e->pid, e->ppid, e->comm, e->file.path, e->flags);
-    // return 0;
-#ifndef TEST_DROPS
-    /* W normalnym trybie wypisujemy eventy */
     printf("[EVENT] type=%u op=%s pid=%u ppid=%u comm=%s path=%s flags=0x%x\n",
            e->type, op_to_str(e->file.op), e->pid, e->ppid,
            e->comm, e->file.path, e->flags);
-#else
-    /* W trybie testowym ściszamy spam eventów, żeby było widać ostrzeżenia o dropach.
-     * Możesz tu odkomentować printf, jeśli chcesz widzieć też odebrane eventy. */
-    (void)e;
-#endif
-
-    /* Co 1024 zdarzenia sprawdź, czy nie minęła sekunda — ważne podczas ciągłego floodu */
     if ((++ctx->events_in_batch & 1023ULL) == 0)
         check_drops(ctx, false);
 
@@ -194,26 +183,6 @@ int mode_watch(struct app_config *cfg){
 	skel->rodata->self_tgid = (uint32_t)getpid();
 	// skel->rodata->min_duration_ns = env.min_duration_ms * 1000000ULL;
 
-#ifdef TEST_DROPS
-    /*
-     * KOD TESTOWY (do usunięcia po testach):
-     * 16 MiB ring buffer trudno zapchać ręcznie. Zmniejszamy go PRZED załadowaniem
-     * do 1 strony pamięci (4096 B na x86_64) — zmieści się tylko kilka eventów,
-     * więc przepełnienie nastąpi błyskawicznie bez zmiany kodu .bpf.c.
-     */
-    long page_sz = sysconf(_SC_PAGESIZE);
-    if (page_sz <= 0)
-        page_sz = 4096;
-    err = bpf_map__set_max_entries(skel->maps.events, (uint32_t)page_sz);
-    if (err) {
-        fprintf(stderr, "[TEST_DROPS] Failed to shrink ringbuf: %d\n", err);
-        goto cleanup;
-    }
-    fprintf(stderr,
-            "[TEST_DROPS] AKTYWNY: ring buffer zmniejszony do %ld B + sztuczne spowolnienie konsumenta\n",
-            page_sz);
-#endif
-
     err = watch_bpf__load(skel);
 	if (err) {
 		fprintf(stderr, "Failed to load and verify BPF skeleton\n");
@@ -240,14 +209,6 @@ int mode_watch(struct app_config *cfg){
 
 
 	while (!stop_program) {
-#ifdef TEST_DROPS
-        /*
-         * KOD TESTOWY (do usunięcia po testach):
-         * Śpimy 300 ms między opróżnianiem bufora. Przez ten czas 4 KiB bufor
-         * zdąży się przepełnić nawet przy zwykłym `ls -R /etc` lub tworzeniu/usuwaniu plików.
-         */
-        usleep(300000);
-#endif
 		err = ring_buffer__poll(rb, 100);
 		if (err == -EINTR){
 			err =0;

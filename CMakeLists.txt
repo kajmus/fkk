@@ -9,6 +9,9 @@ option(ENABLE_ASAN "Enable AddressSanitizer and UBSan" ON)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+# Export compile_commands.json for clangd / tooling support
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # add_compile_options(-Wall -Wextra -g)
 
 find_program(CLANG_PROG clang REQUIRED)
