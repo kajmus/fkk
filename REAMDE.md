@@ -67,3 +67,9 @@ two submodes looking at the current open files like lsof and second by bpf monit
 
 ### versioned linux source code
     https://elixir.bootlin.com
+
+# temp ideas
+
+## counting drops
+- counting drops in bpf once and if user space is not keeping up we need a way to filer them for performance since i think its more likealy they will be skipped in user space like saving to file or printing but i don't knwo how much
+- testing needed for how much is dropped one extra counter in bpf and one in user space for testing

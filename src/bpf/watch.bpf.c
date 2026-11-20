@@ -32,12 +32,12 @@ struct {
 // skiped or droped events for reasons like full ringbuffer 
 struct {
     __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
-    __uint(max_entries, 1);
+    __uint(max_entries, FKK_OP_MAX);
     __type(key, __u32);
     __type(value, __u64);
 } drops SEC(".maps");
 
-// map for Extending path lenght
+// map+struct for Extending path lenght
 struct e_path {
     char buf[2 * MAX_PATH_LEN];
 };
@@ -50,8 +50,12 @@ struct {
 } e_path_map SEC(".maps");
 
 
-// static __always_inline void count_drop(void){}
-static __always_inline struct event *event_begin(__u32 type){
+static __always_inline void count_drop(__u32 op){
+    __u32 key = (op < FKK_OP_MAX) ? op:0;
+    __u64 *cnt = bpf_map_lookup_elem(&drops, &key);
+    if (cnt) __sync_fetch_and_add(cnt,1);
+}
+static __always_inline struct event *event_begin(__u32 type, __u32 op){
     __u64 pid_tgid = bpf_get_current_pid_tgid();
     __u32 tgid = pid_tgid >> 32;
     if (tgid == self_tgid)
@@ -61,7 +65,7 @@ static __always_inline struct event *event_begin(__u32 type){
 
     struct event *e = bpf_ringbuf_reserve(&events, sizeof(*e), 0);
     if (!e) {
-        // count_drop();
+        count_drop(op);
         return NULL;
     }
 
@@ -130,7 +134,30 @@ static __always_inline void set_file_ids(struct event *e, struct inode *inode){
     e->file.inode = BPF_CORE_READ(inode, i_ino);
     e->file.i_mode = BPF_CORE_READ(inode, i_mode);
 }
-// static __always_inline int emit_dentry_event(__u32 op, struct dentry *dentry, __u16 mode_hint){}
+static __always_inline int emit_dentry_event(__u32 op, 
+    struct dentry *dentry, __u16 mode_hint){
+    struct event *e = event_begin(FKK_EVENT_FILE, op);
+    if (!e) return 0;
+
+    struct inode  *inode = BPF_CORE_READ(dentry, d_inode);
+
+    e->file.op = op;
+    e->file.ret = 0;
+
+    if(inode) set_file_ids(e, inode);
+    else {
+        struct dentry *parent = BPF_CORE_READ(dentry, d_parent);
+        struct inode *dir = BPF_CORE_READ(parent, d_inode);
+
+        e->file.dev = BPF_CORE_READ(dir, i_sb, s_dev);
+        e->file.inode = 0;
+        e->file.i_mode = mode_hint;
+    }
+    long n = dentry_to_path(dentry, e->file.path, &e->flags);
+    e->file.path_len =n > 0 ? (__u16)n :0;
+    bpf_ringbuf_submit(e,0);
+    return 0;
+}
 
 
 SEC("lsm/file_open")
@@ -147,7 +174,7 @@ int BPF_PROG(lsm_file_open, struct file *file){
     else
         return 0;
 
-    struct event *e = event_begin(FKK_EVENT_FILE);
+    struct event *e = event_begin(FKK_EVENT_FILE, op);
     if (!e) return 0;
     e->file.op = op;
     e->file.ret = 0;
@@ -163,56 +190,28 @@ int BPF_PROG(lsm_file_open, struct file *file){
 }
 
 
-// SEC("lsm/inode_create")
-// int BPF_PROG(lsm_inode_create, struct inode *dir, struct dentry *dentry,
-//              umode_t mode){}
-// SEC("lsm/inode_unlink")
-// int BPF_PROG(lsm_inode_unlink, struct inode *dir, struct dentry *dentry){}
-// SEC("lsm/inode_rename")
-// int BPF_PROG(lsm_inode_rename, struct inode *old_dir,
-//              struct dentry *old_dentry, struct inode *new_dir,
-//              struct dentry *new_dentry){}
-// SEC("lsm/path_chmod")
-// int BPF_PROG(lsm_path_chmod, const struct path *path, umode_t mode){}
-// SEC("lsm/path_chown")
-// int BPF_PROG(lsm_path_chown, const struct path *path){}
-
-
-// struct {
-// 	__uint(type, BPF_MAP_TYPE_HASH);
-// 	__uint(max_entries, 8192);
-// 	__type(key, pid_t);
-// 	__type(value, u64);
-// } exec_start SEC(".maps");
-
-// struct {
-//     __uint(type, BPF_MAP_TYPE_RINGBUF);
-//     __uint(max_entries, 1 << 24);
-//     // __uint(max_entries, 256*1024);
-// } rb SEC(".maps");
-
-// SEC("fentry/security_file_open")
-// int BPF_PROG(handle_watch, struct file *file)
-// {
-//     struct task_struct *task;
-//     struct event *e;
-//     pid_t pid;
-//     u64 ts;
-
-//     pid = bpf_get_current_pid_tgid() >> 32;
-//     ts = bpf_ktime_get_ns();
-//     bpf_map_update_elem(&exec_start, &pid, &ts, BPF_ANY);
-//     // const unsigned char *name = file->f_path.dentry->d_name.name;
-
-//     e = bpf_ringbuf_reserve(&rb, sizeof(*e), 0);
-//     if (!e) return 0;
-
-//     task = (struct task_struct *)bpf_get_current_task();
-//     e->exit_event=false;
-//     e->pid = pid;
-//     e->ppid = BPF_CORE_READ(task, real_parent, tgid);
-//     bpf_get_current_comm(&e->comm, sizeof(e->comm));
-
-//     bpf_ringbuf_submit(e,0);
-//     return 0;
-// }
+SEC("lsm/inode_create")
+int BPF_PROG(lsm_inode_create, struct inode *dir, struct dentry *dentry,
+             umode_t mode){
+    return emit_dentry_event(FKK_OP_CREATE, dentry, mode);
+}
+SEC("lsm/inode_unlink")
+int BPF_PROG(lsm_inode_unlink, struct inode *dir, struct dentry *dentry){
+    return emit_dentry_event(FKK_OP_UNLINK, dentry, 0);
+}
+SEC("lsm/inode_rename")
+int BPF_PROG(lsm_inode_rename, struct inode *old_dir,
+             struct dentry *old_dentry, struct inode *new_dir,
+             struct dentry *new_dentry){
+    return emit_dentry_event(FKK_OP_RENAME, old_dentry,0);
+}
+SEC("lsm/path_chmod")
+int BPF_PROG(lsm_path_chmod, const struct path *path, umode_t mode){
+    return emit_dentry_event(FKK_OP_CHMOD,  
+        BPF_CORE_READ(path, dentry),0);
+}
+SEC("lsm/path_chown")
+int BPF_PROG(lsm_path_chown, const struct path *path){
+    return emit_dentry_event(FKK_OP_CHOWN, 
+        BPF_CORE_READ(path, dentry), 0);
+}

@@ -195,6 +195,12 @@ CMAKE_TAPI:FILEPATH=CMAKE_TAPI-NOTFOUND
 // Studio IDE projects all commands are done without /nologo.
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
+//Enable AddressSanitizer and UBSan
+ENABLE_ASAN:BOOL=OFF
+
+//Enable GDB debugging
+ENABLE_DEBUG:BOOL=ON
+
 //Path to a library.
 LIBELF_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libelf.so
 
