@@ -5,12 +5,10 @@
 #include "cli.h"
 
 void cli_print_help(const char *prog_name) {
-    printf("Użycie: %s <watch|guard> [opcje]\n\n", prog_name);
-    printf("Opcje:\n");
-    printf("  -p, --path <ścieżka>   Ścieżka do monitorowania/ochrony\n");
-    printf("  -i, --interval <ms>    Czas odświeżania dla watch (domyślnie: 1000)\n");
-    printf("  -b, --block            Blokuj zapis (tylko dla trybu guard)\n");
-    printf("  -v, --verbose          Więcej logów\n");
+    printf("usage: %s <watch|guard> [options]\n\n", prog_name);
+    printf("options:\n");
+    printf("  -p, --path             path to resource\n");
+    printf("  -v, --verbose          more logs\n");
 }
 
 int cli_parse(int argc, char **argv, struct app_config *cfg) {
@@ -24,22 +22,19 @@ int cli_parse(int argc, char **argv, struct app_config *cfg) {
         return -1;
     }
 
-    // 2. Sprawdzamy pierwszy argument (sub-komenda: watch lub guard)
     if (strcmp(argv[1], "watch") == 0) {
         cfg->mode = MODE_WATCH;
     } else if (strcmp(argv[1], "guard") == 0) {
         cfg->mode = MODE_GUARD;
     } else {
-        fprintf(stderr, "Błąd: Nieznany tryb '%s'\n", argv[1]);
+        fprintf(stderr, "[ERROR]: Unknown option '%s'\n", argv[1]);
         cli_print_help(argv[0]);
         return -1;
     }
 
-    // Przesuwamy wskaźniki o 1, żeby getopt_long czytał flagi PO słowie "watch"/"guard"
     argc--;
     argv++;
 
-    // 3. Definiujemy flagi
     static struct option long_options[] = {
         {"path",     required_argument, 0, 'p'},
         {"interval", required_argument, 0, 'i'},

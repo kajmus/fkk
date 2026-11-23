@@ -6,5 +6,5 @@ C_DEFINES =
 
 C_INCLUDES = -I/home/kamil/Documents/fkk/include -I/home/kamil/Documents/fkk/src -I/home/kamil/Documents/fkk/build/bpf_generated
 
-C_FLAGS = -std=gnu11 -Wall -Wextra -g
+C_FLAGS = -std=gnu11 -Wall -Wextra -g3 -O0 -fno-omit-frame-pointer
 

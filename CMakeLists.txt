@@ -1,9 +1,18 @@
 cmake_minimum_required(VERSION 3.20)
 project(fkk C)
 
+# OPTIONS
+option(ENABLE_DEBUG "Enable GDB debugging" ON)
+option(ENABLE_ASAN "Enable AddressSanitizer and UBSan" ON)
+
+
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-add_compile_options(-Wall -Wextra -g)
+
+# Export compile_commands.json for clangd / tooling support
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# add_compile_options(-Wall -Wextra -g)
 
 find_program(CLANG_PROG clang REQUIRED)
 find_program(BPFTOOL_PROG bpftool REQUIRED)
@@ -85,6 +94,40 @@ file(GLOB APP_SOURCES
 )
 
 add_executable(fkk ${APP_SOURCES})
+
+target_compile_options(fkk PRIVATE
+    -Wall
+    -Wextra
+)
+
+if(ENABLE_DEBUG)
+    message(STATUS "Debug mode: ON")
+
+    target_compile_options(fkk PRIVATE
+        -g3
+        -O0
+        -fno-omit-frame-pointer
+    )
+
+    target_link_options(fkk PRIVATE
+        -g3
+    )
+endif()
+
+if(ENABLE_ASAN)
+    message(STATUS "AddressSanitizer + UBSan: ON")
+
+    target_compile_options(fkk PRIVATE
+        -g3
+        -O1
+        -fsanitize=address,undefined
+        -fno-omit-frame-pointer
+    )
+
+    target_link_options(fkk PRIVATE
+        -fsanitize=address,undefined
+    )
+endif()
 
 # Ustawienie ścieżek wyszukiwania nagłówków (#include)
 target_include_directories(fkk PRIVATE

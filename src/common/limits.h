@@ -1,4 +1,4 @@
 // shared sizes (path length, comm length)
 
 #define TASK_COMM_LEN	 16
-#define MAX_FILENAME_LEN 256
+#define MAX_PATH_LEN 256

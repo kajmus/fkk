@@ -1,0 +1,20 @@
+[
+{
+  "directory": "/home/kamil/Documents/fkk/build",
+  "command": "/usr/bin/cc  -I/home/kamil/Documents/fkk/include -I/home/kamil/Documents/fkk/src -I/home/kamil/Documents/fkk/build/bpf_generated -std=gnu11 -Wall -Wextra -g3 -O0 -fno-omit-frame-pointer -o CMakeFiles/fkk.dir/src/cli/cli.c.o -c /home/kamil/Documents/fkk/src/cli/cli.c",
+  "file": "/home/kamil/Documents/fkk/src/cli/cli.c",
+  "output": "CMakeFiles/fkk.dir/src/cli/cli.c.o"
+},
+{
+  "directory": "/home/kamil/Documents/fkk/build",
+  "command": "/usr/bin/cc  -I/home/kamil/Documents/fkk/include -I/home/kamil/Documents/fkk/src -I/home/kamil/Documents/fkk/build/bpf_generated -std=gnu11 -Wall -Wextra -g3 -O0 -fno-omit-frame-pointer -o CMakeFiles/fkk.dir/src/main.c.o -c /home/kamil/Documents/fkk/src/main.c",
+  "file": "/home/kamil/Documents/fkk/src/main.c",
+  "output": "CMakeFiles/fkk.dir/src/main.c.o"
+},
+{
+  "directory": "/home/kamil/Documents/fkk/build",
+  "command": "/usr/bin/cc  -I/home/kamil/Documents/fkk/include -I/home/kamil/Documents/fkk/src -I/home/kamil/Documents/fkk/build/bpf_generated -std=gnu11 -Wall -Wextra -g3 -O0 -fno-omit-frame-pointer -o CMakeFiles/fkk.dir/src/modes/watch.c.o -c /home/kamil/Documents/fkk/src/modes/watch.c",
+  "file": "/home/kamil/Documents/fkk/src/modes/watch.c",
+  "output": "CMakeFiles/fkk.dir/src/modes/watch.c.o"
+}
+]
