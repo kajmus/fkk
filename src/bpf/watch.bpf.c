@@ -50,6 +50,9 @@ struct {
 } e_path_map SEC(".maps");
 
 
+// helper functions -----------------------------------------------------------------------------
+
+
 static __always_inline void count_drop(__u32 op){
     __u32 key = (op < FKK_OP_MAX) ? op:0;
     __u64 *cnt = bpf_map_lookup_elem(&drops, &key);
@@ -158,6 +161,8 @@ static __always_inline int emit_dentry_event(__u32 op,
     bpf_ringbuf_submit(e,0);
     return 0;
 }
+
+// HOOKS -----------------------------------------------------------------------------
 
 
 SEC("lsm/file_open")

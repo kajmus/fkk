@@ -4,6 +4,7 @@ def main():
     base_name = "file"
 
     try:
+        os.system(f"mkdir build")
         os.system(f"cd build && cmake .. ")
         os.system(f"cd build && cmake --build .")
 

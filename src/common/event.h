@@ -5,8 +5,9 @@
 #ifndef __EVENT_H
 #define __EVENT_H
 
-#define TASK_COMM_LEN 16
-#define MAX_PATH_LEN  256
+#include "limits.h"
+// #define TASK_COMM_LEN 16
+// #define MAX_PATH_LEN  256
 
 enum fkk_event_type {
     FKK_EVENT_FILE = 1,
@@ -34,12 +35,12 @@ enum fkk_file_op {
 #define FLAG_SUID_EXEC         (1U << 3) /* Uruchomienie z SUID/SGID */
 
 struct event {
-    /* 1. Metadane zdarzenia */
+    // metadata
     __u64 timestamp_ns;          /* bpf_ktime_get_ns() */
     __u32 type;                  /* enum event_type */
     __u32 flags;                 /* FLAG_* bitmask */
-
-    /* 2. Kontekst procesu (KTO to zrobił) */
+    
+    // procces info 
     __u32 pid;                   /* TGID w nomenklaturze kernela (PID w user-space) */
     __u32 tid;                   /* PID w nomenklaturze kernela (ID wątku) */
     __u32 ppid;                  /* Parent TGID - kluczowe dla drzewa procesów */
@@ -49,12 +50,12 @@ struct event {
     __u32 auid;                  /* Audit Login UID (-1 dla demonów np. nginx) */
     __u64 cgroup_id;             /* Identyfikacja kontenera Docker/K8s */
 
-    /* Niepodrabialna tożsamość binarki procesu (task->mm->exe_file->f_inode) */
+    //  precises identification 
     __u32 exe_dev;
     __u64 exe_inode;
-    char  comm[TASK_COMM_LEN];   /* Nazwa procesu z task_struct */
+    char  comm[TASK_COMM_LEN];   // file/program name
 
-    /* 3. Dane specyficzne dla typu zdarzenia */
+    // type specific
     union {
         struct {
             __u32 op;            /* enum file_op */
@@ -68,7 +69,7 @@ struct event {
 
         struct {
             __s32 ret;
-            __u32 stdin_inode;   /* Inode deskryptora 0 (do korelacji z socketem) */
+            __u32 stdin_inode;   // for sockets
             __u16 path_len;
             char  filename[MAX_PATH_LEN];
         } exec;
@@ -79,4 +80,4 @@ struct event {
     };
 };
 
-#endif /* __EVENT_H */
+#endif

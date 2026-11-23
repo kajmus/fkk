@@ -18,7 +18,6 @@ int main(int argc, char **argv) {
         case MODE_WATCH:
             printf("[START] Tryb WATCH na ścieżce: %s (odświeżanie: %d ms)\n", 
                    cfg.target_path, cfg.refresh_ms);
-            // return run_watch_mode(&cfg, &stop_program);
             return mode_watch(&cfg);
             
             // break;
@@ -26,7 +25,6 @@ int main(int argc, char **argv) {
         case MODE_GUARD:
             printf("[START] Tryb GUARD na ścieżce: %s (blokowanie: %s)\n", 
                    cfg.target_path, cfg.block_writes ? "TAK" : "NIE");
-            // return run_guard_mode(&cfg, &stop_program);
             break;
 
         default:

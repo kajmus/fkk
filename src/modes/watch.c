@@ -16,7 +16,6 @@
 #include "../common/event.h"
 
 #define DROP_CHECK_INTERVAL_NS (1000000000ULL) // 1 second
-// #define TEST_DROPS 1
 static volatile sig_atomic_t stop_program = 0;
 
 
@@ -181,7 +180,6 @@ int mode_watch(struct app_config *cfg){
 	}
 
 	skel->rodata->self_tgid = (uint32_t)getpid();
-	// skel->rodata->min_duration_ns = env.min_duration_ms * 1000000ULL;
 
     err = watch_bpf__load(skel);
 	if (err) {
